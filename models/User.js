@@ -1,33 +1,41 @@
-const { Schema, model, Types } = require("mongoose");
+const { Schema, model } = require("mongoose");
+const dateFormat = require("../utils/dateFormat.js");
 
-const userSchema = new Schema(
+const UserSchema = new Schema(
   {
     username: {
       type: String,
-      unique: true,
       required: true,
+      // unique: true,
       trim: true,
     },
     email: {
       type: String,
       required: true,
-      unique: true,
+      // unique: true,
       validate: {
-        validator: function (v) {
-          return /^([a-z0-9\.-_]+)@([a-z0-9\.-]+)\.([a-z\.]{2,6})$/.test(v);
+        validator: function (E) {
+          return /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(
+            E
+          );
         },
-        message: (props) => `${props.value} is not a valid email address`,
+        message: "Email validation failed",
       },
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now,
+      get: (createdAtVal) => dateFormat(createdAtVal),
     },
     thoughts: [
       {
-        type: Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Thought",
       },
     ],
     friends: [
       {
-        type: Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "User",
       },
     ],
@@ -35,15 +43,18 @@ const userSchema = new Schema(
   {
     toJSON: {
       virtuals: true,
+      getters: true,
     },
+    // prevents virtuals from creating duplicate of _id as `id`
     id: false,
   }
 );
 
-userSchema.virtual("friendCount").get(function () {
+// get total count of friends
+UserSchema.virtual("friendCount").get(function () {
   return this.friends.length;
 });
 
-const User = model("user", userSchema);
+const User = model("User", UserSchema);
 
 module.exports = User;

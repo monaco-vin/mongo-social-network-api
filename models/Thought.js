@@ -1,67 +1,69 @@
 const { Schema, model, Types } = require("mongoose");
-const reactionSchema = new Schema(
+const dateFormat = require("../utils/dateFormat.js");
+
+const ReactionSchema = new Schema(
   {
     reactionId: {
-      type: Types.ObjectId,
-      default: new Types.ObjectId(),
+      type: Schema.Types.ObjectId,
+      default: () => new Types.ObjectId(),
     },
     reactionBody: {
       type: String,
       required: true,
-      maxlength: 280,
+      minLength: 1,
+      maxLength: 280,
     },
     username: {
       type: String,
       required: true,
+      trim: true,
     },
     createdAt: {
       type: Date,
-      default: new Date(),
+      default: Date.now,
+      get: (createdAtVal) => dateFormat(createdAtVal),
     },
   },
   {
     toJSON: {
-      virtuals: true,
+      getters: true,
     },
-    id: false,
   }
 );
 
-const thoughtSchema = new Schema(
+const ThoughtSchema = new Schema(
   {
+    username: {
+      type: String,
+      required: true,
+    },
     thoughtText: {
       type: String,
       required: true,
-      maxlength: 280,
-      minlength: 1,
+      minLength: 1,
+      maxLength: 280,
     },
     createdAt: {
       type: Date,
-      default: new Date(),
+      default: Date.now,
+      get: (createdAtVal) => dateFormat(createdAtVal),
     },
-    username: {
-      type: String,
-      required: true,
-    },
-    reactions: [reactionSchema],
+    // use ReactionSchema to validate data for a reply
+    reactions: [ReactionSchema],
   },
   {
     toJSON: {
       virtuals: true,
+      getters: true,
     },
     id: false,
   }
 );
 
-thoughtSchema.virtual("timeCreated").get(function () {
-  const t = new Date(this.createdAt);
-  return `${t.getDate()}/${t.getMonth()}/${t.getFullYear()} at ${t.getHours()}:${t.getMinutes()}:${t.getSeconds()}`;
-});
-
-thoughtSchema.virtual("reactionCount").get(function () {
+ThoughtSchema.virtual("reactionCount").get(function () {
   return this.reactions.length;
 });
 
-const Thought = model("thought", thoughtSchema);
+const Thought = model("Thought", ThoughtSchema);
 
 module.exports = Thought;
